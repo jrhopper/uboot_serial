@@ -6,8 +6,7 @@ This script updates the bootloader image on the u-boot device taken from the mic
 import argparse
 import serial
 import serial.tools.list_ports
-from uboot import read_until, readline_until, send_cmd, check_prompt, boot_to_uboot, \
-    login, boot_to_login, boot_to_root, log
+from uboot import read_until, readline_until, send_cmd, check_prompt, boot_to_uboot, log
 
 def main():
     """
@@ -69,8 +68,8 @@ def update_bootloader(port, image):
     try:
         com = serial.Serial(port, 115200, timeout=1)
     except serial.SerialException:
-        print("Could not access comport {}".format(port))
-        print("Exiting script...")
+        log("Could not access comport {}".format(port), print_log)
+        log("Exiting script...", print_log)
         return
 
     # Check prompt to find where we're at
@@ -87,7 +86,8 @@ def update_bootloader(port, image):
                 log("You may release the programming button now...", print_log)
         else:
             log("Request timed out...", print_log)
-            print("Exiting script...")
+            log("Exiting script...", print_log)
+            com.close()
             return
     # Stop at u-boot prompt
     else:
@@ -109,7 +109,8 @@ def update_bootloader(port, image):
         if "Error loading firmware file to RAM" in result:
             log("Could not find u-boot image file {} on SD card, " \
                 "or card is not present.".format(image), print_log)
-        print("Exiting script...")
+        log("Exiting script...", print_log)
+        com.close()
         return
 
     # Reset and stop at u-boot prompt
