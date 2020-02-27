@@ -1,0 +1,11 @@
+.DS_Store
+*.pyc
+build
+dist
+*.egg-info
+.vs/
+*.sln
+*.pyproj
+*.ipynb
+.ipynb_checkpoints/
+.mypy_cache/
