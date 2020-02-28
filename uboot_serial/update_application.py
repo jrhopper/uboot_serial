@@ -6,7 +6,7 @@ This script updates the application on the device taken from the microSD card.
 import argparse
 import serial
 import serial.tools.list_ports
-from uboot import read_until, readline_until, send_cmd, check_prompt, boot_to_uboot, log, \
+from uboot import read_until, readline_until, send_cmd, check_prompt, log, \
     boot_to_login, boot_to_root
 
 def main():
@@ -102,7 +102,7 @@ def update_application(port, serialno, root_psswd="Allergen_lock"):
         read_until(com, "ccimx6sbc login: ", timeout=40)
         boot_to_root(com, reboot=False)
         log("At root prompt...", print_log)
-        
+
     # If prompt is already at root, don't reboot.
     elif prompt == "root":
         log("At root prompt...", print_log)
@@ -175,7 +175,7 @@ def get_input_args():
     """
     Parse command line arguments.
 
-    usage: update_application.py [-h] [--port PORT] [--root_psswd PASSWORD] serialno 
+    usage: update_application.py [-h] [--port PORT] [--root_psswd PASSWORD] serialno
 
     positional arguments:
         serialno                    The new serial number to be flashed on the device.
