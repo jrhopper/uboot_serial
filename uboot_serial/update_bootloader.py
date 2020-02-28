@@ -26,13 +26,13 @@ def main():
             print("Please connect an FTDI USB-to-serial converter " \
                   "or specify the port with the --port option.")
             print("Exiting script...")
-            return
+            raise RuntimeError("Could not find an FTDI connected device.")
         if len(usb_serial_ports) > 1:
             # found multiple devices
             print("Found multiple FTDI devices: {}".format(usb_serial_ports))
             print("Please use the --port option to select the correct device.")
             print("Exiting script...")
-            return
+            raise RuntimeError("Found multiple FTDI devices: {}".format(usb_serial_ports))
         ftdi_port = usb_serial_ports[0]
     else:
         ftdi_port = in_arg.port
@@ -67,16 +67,16 @@ def update_bootloader(port, image):
         raise ValueError("Image file extension must be *.imx")
     try:
         com = serial.Serial(port, 115200, timeout=1)
-    except serial.SerialException:
+    except serial.SerialException as err:
         log("Could not access comport {}".format(port), print_log)
         log("Exiting script...", print_log)
-        return
+        raise serial.SerialException(err)
 
     # Check prompt to find where we're at
     prompt = check_prompt(com)
 
     # If no prompt, then tell user to boot from SD card
-    if prompt is None:
+    if prompt == "":
         log("Please boot the device via the SD card now...", print_log)
         result = read_until(com, "Hit any key to stop autoboot: ", timeout=60)
         if result:
@@ -88,11 +88,14 @@ def update_bootloader(port, image):
             log("Request timed out...", print_log)
             log("Exiting script...", print_log)
             com.close()
-            return
-    # Stop at u-boot prompt
+            raise RuntimeError("Request timed out...")
+    # If prompt is already at u-boot, don't reset.
+    elif prompt == "uboot":
+        log("At u-boot prompt...", print_log)
+    # Otherwise, reset and stop at u-boot prompt
     else:
         log("Booting to u-boot prompt...", print_log)
-        boot_to_uboot(com)
+        boot_to_uboot(com, reset=True)
 
     # Program the bootloader
     log("Programming the bootloader...", print_log)
@@ -106,16 +109,16 @@ def update_bootloader(port, image):
         log("Bootloader updated successfully.", print_log)
     else:
         log("Failure!", print_log)
-        if "Error loading firmware file to RAM" in result:
+        if "Error loading firmware file to RAM." in result:
             log("Could not find u-boot image file {} on SD card, " \
                 "or card is not present.".format(image), print_log)
         log("Exiting script...", print_log)
         com.close()
-        return
+        raise RuntimeError("Error loading firmware file to RAM.")
 
     # Reset and stop at u-boot prompt
     log("Resetting CPU and booting to u-boot prompt...", print_log)
-    boot_to_uboot(com)
+    boot_to_uboot(com, reset=True)
 
     com.close()
     log("Bootloader update is complete.", print_log)

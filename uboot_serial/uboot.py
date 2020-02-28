@@ -77,32 +77,47 @@ def check_prompt(com):
     Returns:
         (str)               A string value: "uboot" | "login" | "root"
     """
-    send_cmd(com, "")
-    send_cmd(com, "")
-    if readline_until(com, "=>", timeout=1):
-        return "uboot"
-    send_cmd(com, "")
-    send_cmd(com, "")
-    if readline_until(com, "ccimx6sbc login:", timeout=1):
-        return "login"
-    send_cmd(com, "")
-    send_cmd(com, "")
-    if readline_until(com, "root@ccimx6sbc:", timeout=1):
-        return "root"
+    prompt_found = False
+    prompt = ""
+    if not prompt_found:
+        send_cmd(com, "")
+        send_cmd(com, "")
+        if readline_until(com, "=>", timeout=1):
+            prompt = "uboot"
+            prompt_found = True
+    if not prompt_found:
+        send_cmd(com, "")
+        send_cmd(com, "")
+        if readline_until(com, "ccimx6sbc login:", timeout=1):
+            prompt = "login"
+            prompt_found = True
+    if not prompt_found:
+        send_cmd(com, "")
+        send_cmd(com, "")
+        if readline_until(com, "root@ccimx6sbc:", timeout=1):
+            prompt = "root"
+            prompt_found = True
+    return prompt
 
-def boot_to_uboot(com):
+def boot_to_uboot(com, reset=True):
     """
     Checks prompt and reboots appropriately. Stops autoboot. Waits for uboot prompt.
     Prints all characters read.
 
     Parameters:
         com                 The serial port
+        reset               If True, the CPU resets even if already at u-boot.
+                            If False, the CPU remains at u-boot prompt if already there.
+                            Default is True.
     Returns:
         (boolean)           Returns True if uboot prompt is ready or False if not.
     """
     prompt = check_prompt(com)
     if prompt == "uboot":
-        send_cmd(com, "reset")
+        if reset:
+            send_cmd(com, "reset")
+        else:
+            return True
     elif prompt == "login":
         success = login(com)
         if success:
@@ -135,7 +150,7 @@ def login(com, root_psswd="Allergen_lock"):
         return True
     return False
 
-def boot_to_login(com):
+def boot_to_login(com, reboot=False):
     """
     Checks prompt and reboots appropriately. Waits for kernel startup.
     Stops at login prompt.
@@ -143,6 +158,8 @@ def boot_to_login(com):
 
     Parameters:
         com                 The serial port
+        reboot              If True, reboots the system regardless of prompt.
+                            If False, remains at root prompt without reboot.
     Returns:
         (boolean)           Returns True if login prompt is ready or False if not.
     """
@@ -152,7 +169,10 @@ def boot_to_login(com):
     elif prompt == "login":
         return True
     elif prompt == "root":
-        send_cmd(com, "exit")
+        if reboot:
+            send_cmd(com, "reboot")
+        else:
+            send_cmd(com, "exit")
     else:
         return False
     read_until(com, "ccimx6sbc login: ", timeout=40)
@@ -162,7 +182,7 @@ def boot_to_login(com):
         return True
     return False
 
-def boot_to_root(com, root_psswd="Allergen_lock"):
+def boot_to_root(com, root_psswd="Allergen_lock", reboot=False):
     """
     Checks prompt and reboots appropriately. Waits for kernel startup. Logs in as root.
     Stops at root prompt.
@@ -171,29 +191,33 @@ def boot_to_root(com, root_psswd="Allergen_lock"):
     Parameters:
         com                 The serial port
         root_psswd          Root password. Default = "Allergen_lock"
+        reboot              If True, reboots the system regardless of prompt.
+                            If False, remains at root prompt without reboot.
     Returns:
         (boolean)           Returns True if root prompt is ready or False if not.
     """
+    prompt_ready = False
     prompt = check_prompt(com)
     if prompt == "uboot":
         send_cmd(com, "reset")
+        read_until(com, "ccimx6sbc login: ", timeout=40)
+        success = login(com, root_psswd=root_psswd)
+        if success:
+            prompt_ready = True
     elif prompt == "login":
         success = login(com, root_psswd=root_psswd)
         if success:
-            return True
+            prompt_ready = True
     elif prompt == "root":
-        return True
-    else:
-        return False
-    read_until(com, "ccimx6sbc login: ", timeout=40)
-    send_cmd(com, "")
-    prompt = check_prompt(com)
-    if prompt == "login":
-        success = login(com, root_psswd=root_psswd)
-        if success:
-            return True
-    else:
-        return False
+        if reboot:
+            send_cmd(com, "reboot")
+            read_until(com, "ccimx6sbc login: ", timeout=60)
+            success = login(com, root_psswd=root_psswd)
+            if success:
+                prompt_ready = True
+        else:
+            prompt_ready = True
+    return prompt_ready
 
 def log(text, print_log=False):
     """
