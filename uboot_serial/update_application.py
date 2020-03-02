@@ -149,7 +149,7 @@ def update_application(port, serialno, root_psswd="Allergen_lock", log_widget=No
     log("Programming serial number {}...".format(serialno), print_log, log_widget)
     send_cmd(com, serialno)
     readline_until(com, "Computed PassPhrase:")
-    passphrase = com.readline().decode('ascii')
+    passphrase = com.readline().decode('ascii').strip()
     log("Computed passphrase: {}".format(passphrase), print_log, log_widget)
     read_until(com, "New password: ")
     log("Entering new root password {}...".format(root_psswd), print_log, log_widget)

@@ -46,7 +46,7 @@ def main():
     # run script
     update_kernel(ftdi_port, images)
 
-def update_kernel(port, firmware):
+def update_kernel(port, firmware, log_widget=None):
     """
     update_kernel function
     This function updates the Yocto kernel from the images on the microSD card.
@@ -66,6 +66,9 @@ def update_kernel(port, firmware):
             boot_image      The name of the boot image file to be flashed
             rootfs_image    The name of the rootfs image file to be flashed
             recovery_image  The name of the recovery image file to be flashed
+        log_widget          The tkinter scrolled text object for printing log output to GUI.
+                            Only used by GUI. Default is None when called by command line. 
+
     Returns
         none
     """
@@ -83,8 +86,8 @@ def update_kernel(port, firmware):
     try:
         com = serial.Serial(port, 115200, timeout=1)
     except serial.SerialException as err:
-        log("Could not access comport {}".format(port), print_log)
-        log("Exiting script...", print_log)
+        log("Could not access comport {}".format(port), print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         raise serial.SerialException(err)
 
     # Check prompt to find where we're at
@@ -92,25 +95,25 @@ def update_kernel(port, firmware):
 
     # If no prompt, then tell user to boot the device
     if prompt == "":
-        log("Please power ON or RESET the device now...", print_log)
+        log("Please power ON or RESET the device now...", print_log, log_widget)
         result = read_until(com, "Hit any key to stop autoboot: ", timeout=60)
         if result:
             send_cmd(com, "")
         else:
-            log("Request timed out...", print_log)
-            log("Exiting script...", print_log)
+            log("Request timed out...", print_log, log_widget)
+            log("Exiting script...", print_log, log_widget)
             com.close()
             raise RuntimeError("Request timed out...")
     # If prompt is already at u-boot, don't reset.
     elif prompt == "uboot":
-        log("At u-boot prompt...", print_log)
+        log("At u-boot prompt...", print_log, log_widget)
     # Otherwise, reset and stop at u-boot prompt
     else:
-        log("Booting to u-boot prompt...", print_log)
+        log("Booting to u-boot prompt...", print_log, log_widget)
         boot_to_uboot(com, reset=True)
 
     # partition eMMC
-    log("Partitioning eMMC drive...", print_log)
+    log("Partitioning eMMC drive...", print_log, log_widget)
     send_cmd(com, "setenv mmcdev 0")
     readline_until(com, "=>")
     send_cmd(com, "env default -a -f")
@@ -118,66 +121,66 @@ def update_kernel(port, firmware):
     send_cmd(com, "run partition_mmc_linux")
     result = readline_until(com, "=>")
     if "Writing GPT: success!" in result:
-        log("Success!", print_log)
-        log("Flash eMMC partitioned successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Flash eMMC partitioned successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Flash eMMC could not be partitioned.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Flash eMMC could not be partitioned.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Flash eMMC could not be partitioned.")
     send_cmd(com, "saveenv")
     readline_until(com, "=>")
 
     # reset back to u-boot prompt
-    log("Resetting CPU to u-boot prompt...", print_log)
+    log("Resetting CPU to u-boot prompt...", print_log, log_widget)
     boot_to_uboot(com, reset=True)
 
     # update images
-    log("Updating linux boot file...", print_log)
+    log("Updating linux boot file...", print_log, log_widget)
     command = "update linux mmc 1 fat " + firmware['boot_image']
     send_cmd(com, command)
     result = readline_until(com, "=>", timeout=30)
     if "Update was successful" in result:
-        log("Success!", print_log)
-        log("Linux installed successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Linux installed successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Linux boot firmware could not be installed.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Linux boot firmware could not be installed.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Linux boot firmware could not be installed.")
 
-    log("Updating root file system. This may take up to two minutes...", print_log)
+    log("Updating root file system. This may take up to two minutes...", print_log, log_widget)
     command = "update rootfs mmc 1 fat " + firmware['rootfs_image']
     send_cmd(com, command)
     result = readline_until(com, "=>", timeout=120)
     if "Firmware updated" in result:
-        log("Success!", print_log)
-        log("Root file system installed successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Root file system installed successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Root file system firmware could not be installed.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Root file system firmware could not be installed.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Root file system firmware could not be installed.")
 
-    log("Updating recovery image...", print_log)
+    log("Updating recovery image...", print_log, log_widget)
     command = "update recovery mmc 1 fat " + firmware['recovery_image']
     send_cmd(com, command)
     result = readline_until(com, "=>", timeout=30)
     if "Update was successful" in result:
-        log("Success!", print_log)
-        log("Recovery image installed successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Recovery image installed successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Recovery image firmware could not be installed.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Recovery image firmware could not be installed.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Recovery image firmware could not be installed.")
 
     # update environments
-    log("Updating environments...", print_log)
+    log("Updating environments...", print_log, log_widget)
     send_cmd(com, "setenv bootcmd dboot linux mmc")
     readline_until(com, "=>")
     send_cmd(com, "saveenv")
@@ -189,26 +192,26 @@ def update_kernel(port, firmware):
     send_cmd(com, "saveenv")
     result = readline_until(com, "=>")
     if "done" in result:
-        log("Success!", print_log)
-        log("Environments updated successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Environments updated successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Environments could not be updated.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Environments could not be updated.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Environments could not be updated.")
 
-    log("Finished updating images.", print_log)
+    log("Finished updating images.", print_log, log_widget)
 
     # boot to login prompt
-    log("Booting kernel...", print_log)
+    log("Booting kernel...", print_log, log_widget)
     booted = boot_to_login(com)
     if booted:
-        log("Kernel update is complete.", print_log)
+        log("Kernel update is complete.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Failed to boot kernel.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Failed to boot kernel.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Failed to boot kernel.")
 

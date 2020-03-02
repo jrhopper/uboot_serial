@@ -40,7 +40,7 @@ def main():
     # run script
     update_bootloader(ftdi_port, in_arg.image)
 
-def update_bootloader(port, image):
+def update_bootloader(port, image, log_widget=None):
     """
     update_bootloader function
     This function updates the bootloader from the image on the microSD card.
@@ -55,6 +55,9 @@ def update_bootloader(port, image):
                             On Windows machines, this will be the word COM followed by
                             a port number.
         image               The name of the u-boot image file to be flashed
+        log_widget          The tkinter scrolled text object for printing log output to GUI.
+                            Only used by GUI. Default is None when called by command line. 
+
     Returns
         none
     """
@@ -68,8 +71,8 @@ def update_bootloader(port, image):
     try:
         com = serial.Serial(port, 115200, timeout=1)
     except serial.SerialException as err:
-        log("Could not access comport {}".format(port), print_log)
-        log("Exiting script...", print_log)
+        log("Could not access comport {}".format(port), print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         raise serial.SerialException(err)
 
     # Check prompt to find where we're at
@@ -77,51 +80,51 @@ def update_bootloader(port, image):
 
     # If no prompt, then tell user to boot from SD card
     if prompt == "":
-        log("Please boot the device via the SD card now...", print_log)
+        log("Please boot the device via the SD card now...", print_log, log_widget)
         result = read_until(com, "Hit any key to stop autoboot: ", timeout=60)
         if result:
             send_cmd(com, "")
             prompt = check_prompt(com)
             if prompt == "uboot":
-                log("You may release the programming button now...", print_log)
+                log("You may release the programming button now...", print_log, log_widget)
         else:
-            log("Request timed out...", print_log)
-            log("Exiting script...", print_log)
+            log("Request timed out...", print_log, log_widget)
+            log("Exiting script...", print_log, log_widget)
             com.close()
             raise RuntimeError("Request timed out...")
     # If prompt is already at u-boot, don't reset.
     elif prompt == "uboot":
-        log("At u-boot prompt...", print_log)
+        log("At u-boot prompt...", print_log, log_widget)
     # Otherwise, reset and stop at u-boot prompt
     else:
-        log("Booting to u-boot prompt...", print_log)
+        log("Booting to u-boot prompt...", print_log, log_widget)
         boot_to_uboot(com, reset=True)
 
     # Program the bootloader
-    log("Programming the bootloader...", print_log)
+    log("Programming the bootloader...", print_log, log_widget)
     command = "update uboot mmc 1 fat " + image
     send_cmd(com, command)
     read_until(com, "program the boot loader? <y/N>")
     send_cmd(com, "y")
     result = readline_until(com, "=>")
     if "Update was successful" in result:
-        log("Success!", print_log)
-        log("Bootloader updated successfully.", print_log)
+        log("Success!", print_log, log_widget)
+        log("Bootloader updated successfully.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
+        log("Failure!", print_log, log_widget)
         if "Error loading firmware file to RAM." in result:
             log("Could not find u-boot image file {} on SD card, " \
-                "or card is not present.".format(image), print_log)
-        log("Exiting script...", print_log)
+                "or card is not present.".format(image), print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Error loading firmware file to RAM.")
 
     # Reset and stop at u-boot prompt
-    log("Resetting CPU and booting to u-boot prompt...", print_log)
+    log("Resetting CPU and booting to u-boot prompt...", print_log, log_widget)
     boot_to_uboot(com, reset=True)
 
     com.close()
-    log("Bootloader update is complete.", print_log)
+    log("Bootloader update is complete.", print_log, log_widget)
 
 def get_input_args():
     """
