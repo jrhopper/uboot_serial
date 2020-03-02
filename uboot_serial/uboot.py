@@ -5,6 +5,8 @@ This script contains supporting functions for updating firmware on the device.
 
 import time
 import datetime
+import tkinter
+import tkinter.scrolledtext as tkst
 
 def read_until(com, string, timeout=5):
     """
@@ -219,7 +221,7 @@ def boot_to_root(com, root_psswd="Allergen_lock", reboot=False):
             prompt_ready = True
     return prompt_ready
 
-def log(text, print_log=False):
+def log(text, print_log=False, widget=None):
     """
     Similar to print(), but with timestamping. If print_log is True, then log is printed
     to terminal. Returns log_data with a timestamp appended.
@@ -234,4 +236,9 @@ def log(text, print_log=False):
     log_data = "[{}]    ".format(timestamp) + text
     if print_log:
         print(log_data)
+    if widget is not None:
+        widget.configure(state='normal')
+        widget.insert(tkinter.INSERT, log_data + '\n')
+        widget.configure(state='disabled')
+        widget.yview_moveto(1)    
     return log_data

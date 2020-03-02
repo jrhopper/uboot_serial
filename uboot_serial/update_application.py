@@ -41,7 +41,7 @@ def main():
     # run script
     update_application(ftdi_port, in_arg.serialno, in_arg.root_psswd)
 
-def update_application(port, serialno, root_psswd="Allergen_lock"):
+def update_application(port, serialno, root_psswd="Allergen_lock", log_widget=None):
     """
     update_application function
     This function updates the application on the device from the microSD card.
@@ -59,6 +59,8 @@ def update_application(port, serialno, root_psswd="Allergen_lock"):
         serialno            Required serial number of the device to be programmed.
         root_psswd          The new root password if other than the default.
                             default=Allergen_lock
+        log_widget          The tkinter scrolled text object for printing log output to GUI.
+                            Only used by GUI. Default is None when called by command line. 
 
     Returns
         passphrase          Returns the computed passphrase for the device.
@@ -82,8 +84,8 @@ def update_application(port, serialno, root_psswd="Allergen_lock"):
     try:
         com = serial.Serial(port, 115200, timeout=1)
     except serial.SerialException as err:
-        log("Could not access comport {}".format(port), print_log)
-        log("Exiting script...", print_log)
+        log("Could not access comport {}".format(port), print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         raise serial.SerialException(err)
 
     # Check prompt to find where we're at
@@ -91,80 +93,80 @@ def update_application(port, serialno, root_psswd="Allergen_lock"):
 
     # If no prompt, then tell user to boot the device
     if prompt == "":
-        log("Please power ON or RESET the device now...", print_log)
+        log("Please power ON or RESET the device now...", print_log, log_widget)
         result = readline_until(com, "U-Boot", timeout=60)
         if not result:
-            log("Request timed out...", print_log)
-            log("Exiting script...", print_log)
+            log("Request timed out...", print_log, log_widget)
+            log("Exiting script...", print_log, log_widget)
             com.close()
             raise RuntimeError("Request timed out...")
-        log("Booting to root prompt...", print_log)
+        log("Booting to root prompt...", print_log, log_widget)
         read_until(com, "ccimx6sbc login: ", timeout=40)
         boot_to_root(com, reboot=False)
-        log("At root prompt...", print_log)
+        log("At root prompt...", print_log, log_widget)
 
     # If prompt is already at root, don't reboot.
     elif prompt == "root":
-        log("At root prompt...", print_log)
+        log("At root prompt...", print_log, log_widget)
     # Otherwise, reboot and stop at root prompt
     else:
-        log("Booting to root prompt...", print_log)
+        log("Booting to root prompt...", print_log, log_widget)
         boot_to_root(com, reboot=False)
-        log("At root prompt...", print_log)
+        log("At root prompt...", print_log, log_widget)
 
     # mount SD card
-    log("Mounting SD card...", print_log)
+    log("Mounting SD card...", print_log, log_widget)
     send_cmd(com, "mkdir /mnt/sdc")
     readline_until(com, "#")
     send_cmd(com, "mount -t vfat /dev/mmcblk1p1 /mnt/sdc")
     readline_until(com, "mount -t vfat /dev/mmcblk1p1 /mnt/sdc")
     result = readline_until(com, "#")
     if "failed" in result:
-        log("Failure!", print_log)
-        log("Failed to mount SD card.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Failed to mount SD card.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Failed to mount SD card.")
 
     # copy application setup file
-    log("Copying application setup files...", print_log)
+    log("Copying application setup files...", print_log, log_widget)
     send_cmd(com, "cp /mnt/sdc/Setup.sh ./")
     readline_until(com, "#")
     send_cmd(com, "chmod 777 Setup.sh")
     readline_until(com, "#")
 
     # run application setup
-    log("Installing application...", print_log)
+    log("Installing application...", print_log, log_widget)
     send_cmd(com, "./Setup.sh")
     result = readline_until(com, "Setting Serial Number")
     if "No such file or directory" in result:
-        log("Failure!", print_log)
-        log("Failed to install application. Directory not found.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Failed to install application. Directory not found.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Failed to install application. Directory not found.")
     readline_until(com, "Enter New Serial Number")
-    log("Programming serial number {}...".format(serialno), print_log)
+    log("Programming serial number {}...".format(serialno), print_log, log_widget)
     send_cmd(com, serialno)
     readline_until(com, "Computed PassPhrase:")
     passphrase = com.readline().decode('ascii')
-    log("Computed passphrase: {}".format(passphrase), print_log)
+    log("Computed passphrase: {}".format(passphrase), print_log, log_widget)
     read_until(com, "New password: ")
-    log("Entering new root password {}...".format(root_psswd), print_log)
+    log("Entering new root password {}...".format(root_psswd), print_log, log_widget)
     send_cmd(com, root_psswd)
     read_until(com, "Re-enter new password: ")
     send_cmd(com, root_psswd)
     read_until(com, "#")
 
     # reboot back to login prompt
-    log("Rebooting...", print_log)
+    log("Rebooting...", print_log, log_widget)
     booted = boot_to_login(com, reboot=True)
     if booted:
-        log("Application update is complete.", print_log)
+        log("Application update is complete.", print_log, log_widget)
     else:
-        log("Failure!", print_log)
-        log("Failed to boot kernel.", print_log)
-        log("Exiting script...", print_log)
+        log("Failure!", print_log, log_widget)
+        log("Failed to boot kernel.", print_log, log_widget)
+        log("Exiting script...", print_log, log_widget)
         com.close()
         raise RuntimeError("Failed to boot kernel.")
 
