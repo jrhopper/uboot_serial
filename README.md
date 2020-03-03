@@ -8,12 +8,14 @@ For any questions, contact the author: steven.lowery@honeywell.com
 # Installation
 
 No installation required, aside from Python and the pyserial package.
+The GUI has a feature for creating QR codes which requires the qrcode package.
 ```
 pip install -r requirements.txt
 ```
 or
 ```
 pip install pyserial
+pip install qrcode[pil]
 ```
 
 ### GUI
@@ -38,6 +40,8 @@ Tested with Python>=3.4.0
 Python>=3.6.10
 
 `pyserial`
+
+`qrcode[pil]`
 
 
 # Usage
@@ -135,7 +139,16 @@ serialno = "BIO-XXX-12345678"
 update_application(port, serialno)
 ```
 
+#### QR Code
+```python
+import qrcode
+img = qrcode.make('Allergen_BIO-CV1-12345678')
+img.save("./QR_codes/Allergen_BIO-CV1-12345678.png")
+```
+
 ### Command Line
+
+#### Programming the Bootloader
 
 ```
 usage: update_bootloader.py [-h] [--port PORT] [--image IMAGE]
@@ -149,6 +162,8 @@ optional arguments:
   --image IMAGE  The name of the u-boot image file to be flashed;
                  default=u-boot-ccimx6qsbc.imx
 ```
+
+#### Programming the Yocto Kernel
 
 ```
 usage: update_kernel.py [-h] [--port PORT] [--boot_image BOOT_IMAGE]
@@ -172,6 +187,8 @@ optional arguments:
                         default=core-image-base-ccimx6sbc.recovery.vfat
 ```
 
+#### Installing the Application 
+
 ```
 usage: update_application.py [-h] [--port PORT] [--root_psswd ROOT_PSSWD]
                              serialno
@@ -188,6 +205,12 @@ optional arguments:
   --root_psswd ROOT_PSSWD
                         The new root password if other than the default.
                         default=Allergen_lock
+```
+
+#### Generating the QR Code
+
+```
+qr "Allergen_BIO-CV1-12345678" > 12345678.png
 ```
 
 ### GUI
@@ -224,7 +247,7 @@ After turning on the device, programming begins and a success message is given a
 
 ![Program Kernel](images/program_kernel.JPG)
 
-#### Setting the Serial Number and Programming the Application
+#### Setting the Serial Number and Installing the Application
 
 Before programming the application, the serial number must be set. The serial number is automatically compiled into a 16 character value given the model _BIO_, followed by a hypen, then the build level, followed by another hyphen, then the numeric unit number in a field of eight digits.
 Both fields, _Build_ and _Unit No._ are both able to be overridden, but the compiled serial number may not be valid and will throw an error during programming.
@@ -236,3 +259,8 @@ To compile the serial number, click the **Update Serial No.** button.
 To program the application, simply click **Program Application**
 
 ![Program Application](images/program_application.JPG)
+
+#### Generating the QR Code
+
+After programming a device, a QR code should be saved and printed to label the unit. Click the **Generate QR Code** button to save the QR code as a PNG. 
+The format of contents of the QR code is "Allergen_{SERIALNO}" and the filename is identical to the contents.

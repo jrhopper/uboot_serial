@@ -4,6 +4,11 @@ This script creates a GUI for using the three update tools to load new firmware
 to the U-Boot device. The GUI uses the tkinter framework.
 """
 
+import os
+try:
+    import qrcode
+except ImportError:
+    pass
 import tkinter
 import tkinter.scrolledtext as tkst
 from tkinter import messagebox
@@ -106,6 +111,7 @@ def disable_inputs():
     UNIT_SPINBOX.configure(state='disabled')
     SN_UPDATE_BTN.configure(state='disabled')
     AUTO_DETECT_BUTTON.configure(state='disabled')
+    GENERATE_QR_BTN.configure(state='disabled')
 
 def enable_inputs():
     """
@@ -125,6 +131,7 @@ def enable_inputs():
     UNIT_SPINBOX.configure(state='normal')
     SN_UPDATE_BTN.configure(state='normal')
     AUTO_DETECT_BUTTON.configure(state='normal')
+    GENERATE_QR_BTN.configure(state='normal')
 
 # button click functions
 def change_port():
@@ -276,6 +283,20 @@ def update_serialno():
     SN_ENTRY_BOX.insert(0, serial_num)
     SN_ENTRY_BOX.configure(state='disabled')
 
+def generate_qrcode(qrcode_text):
+    """
+    GUI Button: Generate QR Code
+
+    Generates a QR code of the current serial number and saves as PNG.
+    """
+    if not os.path.exists("./QR_codes"):
+        os.mkdir("./QR_codes")
+    img = qrcode.make(qrcode_text)
+    path = os.getcwd() + "\\QR_codes\\{}.png".format(qrcode_text)
+    img.save(path)
+    log("QR code saved to {}".format(path), print_log=False, widget=LOGWINDOW)
+    messagebox.showinfo("File Saved", "QR code has been saved as {}".format(path))
+
 # define the GUI window
 WINDOW = tkinter.Tk()
 WINDOW.title("Allergen Sensor Serial Programming Tool")
@@ -348,6 +369,12 @@ update_serialno()
 SN_UPDATE_BTN = tkinter.Button(INPUTFRAME, text="Update Serial No.",
                                command=update_serialno, state='disabled')
 SN_UPDATE_BTN.grid(row=12, column=2, padx=5, pady=20)
+
+# QR code generator button
+GENERATE_QR_BTN = tkinter.Button(INPUTFRAME, text="Generate QR Code",
+                                 command=lambda: generate_qrcode("Allergen_"+SERIALNO.get()),
+                                 state='disabled')
+GENERATE_QR_BTN.grid(row=14, column=2, padx=5, pady=20)
 
 # main GUI loop
 log("Welcome to the U-Boot device update tool!", print_log=False, widget=LOGWINDOW)
