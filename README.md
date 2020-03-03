@@ -27,6 +27,13 @@ activate serial_py37
 pip install -r requirements.txt
 ```
 
+### Portable Windows EXE
+If you do not wish to install Python on your machine, there is a portable windows *.exe distribution.
+To download the package, choose _Download as Zip_ from GitHub rather than cloning the repository,
+and navigate to the `./uboot_serial/dist` folder. The `dist` folder can be zipped into a portable self-contained Python runtime with all required packages and libraries.
+Everything needed to run the GUI application is contained in the `dist` folder. 
+To run the portable executable on a Windows machine, navigate to and run `./uboot_serial/dist/uboot_gui/uboot_gui.exe`.
+
 # Dependencies
 
 ### Command Line
