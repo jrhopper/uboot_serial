@@ -11,10 +11,31 @@ No installation required, aside from Python and the pyserial package.
 ```
 pip install -r requirements.txt
 ```
+or
+```
+pip install pyserial
+```
+
+### GUI
+Due to certain string formatting techniques, Python 3.6.10 or greater is required.
+It is suggested to use a virtualenv or conda environment and install Python 3.7 as follows:
+```
+conda create -n serial_py37 python=3.7
+activate serial_py37
+pip install -r requirements.txt
+```
 
 # Dependencies
 
-Python 3.x
+### Command Line
+
+Tested with Python>=3.4.0
+
+`pyserial`
+
+### GUI
+
+Python>=3.6.10
 
 `pyserial`
 
@@ -32,27 +53,86 @@ It is always recommended to do a hard power-on-reset (POR) between each installa
 In general, the procedure should be as follows:
 1. SD card is inserted
 2. Boot from SD card by holding the programming button while powering on.
-3. Install the bootloader from SD card using `update_bootloader.py`
+3. Install the bootloader from SD card using `python update_bootloader.py`
 4. Power on reset
-5. Install the Yocto kernel images using `update_kernel.py`
+5. Install the Yocto kernel images using `python update_kernel.py`
 6. Power on reset
-7. Install the application using `update_application.py`
+7. Install the application using `python update_application.py SERIALNO`
 
 For a device that is already programmed and simply needs updating, the procedure may be as follows:
 1. SD card is inserted
 2. Power on the device
-3. Install the necessary base updates (bootloader or kernel) with `update_bootloader.py` or `update_kernel.py`
-4. Install the new application (no POR required) with `update_application.py`
+3. Install the necessary base updates (bootloader or kernel) with `python update_bootloader.py` or `python update_kernel.py`
+4. Install the new application (no POR required) with `python update_application.py SERIALNO`
 
 For a device that simply needs an application update from the SD card, the procedure is simple:
 1. SD card is inserted
 2. Power on the device
-3. Update the application with `update_application.py`
+3. Update the application with `python update_application.py SERIALNO`
+
+### SD Card Contents
+
+All the tools have fields with default values for image file names that can be overridden if necessary. The following default values are assumed:
+
+> root password = "Allergen_lock"
+
+> u-boot image filename = "u-boot-ccimx6qsbc.imx"
+
+> boot file image filename = "core-image-base-ccimx6sbc.boot.vfat"
+
+> root file system image filename = "core-image-base-ccimx6sbc.rootfs.ext4"
+
+> recovery image filename = "core-image-base-ccimx6sbc.recovery.vfat"
+
+The micro SD card should be FAT formatted and flashed with the U-Boot image in a separate BOOT partition and the other image files in a separate partition.
+If all default filenames are used, the SD card contents should be as follows:
+
+![SD Card Contents](images/sd_card_contents.jpg)
 
 ### Python
 
+#### Bootloader
+```python
+import uboot
+from update_bootloader import update_bootloader
+
+# print the docs
+print(update_bootloader.__doc__)
+
+# update bootloader
+port = "COM5"
+image = "u-boot-ccimx6qsbc.imx"
+update_bootloader(port, image)
 ```
-pip install -r requirements.txt
+
+#### Kernel
+```python
+import uboot
+from update_kernel import update_kernel
+
+# print the docs
+print(update_kernel.__doc__)
+
+# update kernel
+port = "COM5"
+firmware = {"boot_image": "core-image-base-ccimx6sbc.boot.vfat", 
+			"rootfs_image": "core-image-base-ccimx6sbc.rootfs.ext4", 
+			"recovery_image": "core-image-base-ccimx6sbc.recovery.vfat"}
+update_kernel(port, firmware)
+```
+
+#### Application
+```python
+import uboot
+from update_application import update_application
+
+# print the docs
+print(update_application.__doc__)
+
+# update application
+port = "COM5"
+serialno = "BIO-XXX-12345678"
+update_application(port, serialno)
 ```
 
 ### Command Line
@@ -109,3 +189,50 @@ optional arguments:
                         The new root password if other than the default.
                         default=Allergen_lock
 ```
+
+### GUI
+
+#### Introduction to the GUI
+
+![GUI Front Panel](images/front_page.jpg)
+
+#### Serial Port Selection
+
+To select the serial port, click **Auto Detect** to automatically find an FTDI Device.
+If you are using a serial converter device that is not recognized as an FTDI device, you can click **Change Port** and manually enter the COM port name (you can find this in the Device Manager).
+After entering a port manually, you can click **Try Port** to test if the port is available.
+
+![Try Port](images/try_port.jpg)
+
+#### Programming the Bootloader
+
+When programming the bootloader, a prompt pops up instructing the user to boot from SD card by holding the programming button and power on the device.
+Once the device has been booted from the SD card, the user may click OK and programming will begin.
+
+![Boot From SD Card Dialog](images/boot_from_card_dialog.jpg)
+
+![Program Bootloader](images/program_bootloader.jpg)
+
+#### Programming the Yocto Kernel
+
+When programming the kernel, a prompt pops up instructing the user to turn the device off (this is to allow the device to boot from eMMC rather than SD card - if the device was already rebooted after programming the bootloader, then this is unnecessary).
+Once the dialog has been acknowledge and the device has booted from eMMC rather than SD card, the programming will begin.
+Keeping a watch on the output log, a message indicates that the device must then be turned ON.
+After turning on the device, programming begins and a success message is given after it is complete.
+
+![Turn Device OFF Dialog](images/turn_device_off_dialog.jpg)
+
+![Program Kernel](images/program_kernel.jpg)
+
+#### Setting the Serial Number and Programming the Application
+
+Before programming the application, the serial number must be set. The serial number is automatically compiled into a 16 character value given the model _BIO_, followed by a hypen, then the build level, followed by another hyphen, then the numeric unit number in a field of eight digits.
+Both fields, _Build_ and _Unit No._ are both able to be overridden, but the compiled serial number may not be valid and will throw an error during programming.
+Requirements for a valid serial number are to be 16 characters, the first 8 must be alpha-numeric and all caps, the last 8 must be all numeric.
+To compile the serial number, click the **Update Serial No.** button. 
+
+![Update Serial Number](images/update_sn.jpg)
+
+To program the application, simply click **Program Application**
+
+![Program Application](images/program_application.jpg)

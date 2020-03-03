@@ -134,6 +134,7 @@ def change_port():
     Enables the entry box for manually entering the COM port.
     """
     current_port_entry.configure(state='normal')
+    ftdi_label.configure(text="")
 
 def try_port():
     """
@@ -146,12 +147,19 @@ def try_port():
     comport = port.get()
     try:
         com = serial.Serial(comport, 115200, timeout=1)
+        if com.name in [port.device for port in serial.tools.list_ports.grep("0403")]:
+            ftdi_label.configure(text="(FTDI Device detected)")
+            log("Comport {} is an FTDI device".format(comport), print_log=False, widget=text)
+        else:
+            ftdi_label.configure(text="(Not an FTDI device)")
+            log("Comport {} is not an FTDI device".format(comport), print_log=False, widget=text)
         com.close()
         log("Comport {} is ready to use".format(comport), print_log=False, widget=text)
         messagebox.showinfo("Success!", "Comport {} is ready to use".format(comport))
         current_port_entry.configure(state='disabled')
     except serial.SerialException:
         log("Could not access comport {}".format(comport), print_log=False, widget=text)
+        ftdi_label.configure(text="(unavailable)")
         messagebox.showwarning("Warning!", "Could not access comport {}".format(comport))
 
 def auto_detect():
