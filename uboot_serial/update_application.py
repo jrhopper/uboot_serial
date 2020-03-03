@@ -60,7 +60,7 @@ def update_application(port, serialno, root_psswd="Allergen_lock", log_widget=No
         root_psswd          The new root password if other than the default.
                             default=Allergen_lock
         log_widget          The tkinter scrolled text object for printing log output to GUI.
-                            Only used by GUI. Default is None when called by command line. 
+                            Only used by GUI. Default is None when called by command line.
 
     Returns
         passphrase          Returns the computed passphrase for the device.

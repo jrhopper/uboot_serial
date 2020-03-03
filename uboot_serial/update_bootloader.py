@@ -56,7 +56,7 @@ def update_bootloader(port, image, log_widget=None):
                             a port number.
         image               The name of the u-boot image file to be flashed
         log_widget          The tkinter scrolled text object for printing log output to GUI.
-                            Only used by GUI. Default is None when called by command line. 
+                            Only used by GUI. Default is None when called by command line.
 
     Returns
         none

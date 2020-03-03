@@ -6,7 +6,6 @@ This script contains supporting functions for updating firmware on the device.
 import time
 import datetime
 import tkinter
-import tkinter.scrolledtext as tkst
 
 def read_until(com, string, timeout=5):
     """
@@ -240,5 +239,5 @@ def log(text, print_log=False, widget=None):
         widget.configure(state='normal')
         widget.insert(tkinter.INSERT, log_data + '\n')
         widget.configure(state='disabled')
-        widget.yview_moveto(1)    
+        widget.yview_moveto(1)
     return log_data

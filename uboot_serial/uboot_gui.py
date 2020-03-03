@@ -1,49 +1,49 @@
 """
 uboot_gui.py
 This script creates a GUI for using the three update tools to load new firmware
-to the U-Boot device. The GUI uses the tkinter framework. 
+to the U-Boot device. The GUI uses the tkinter framework.
 """
 
 import tkinter
 import tkinter.scrolledtext as tkst
 from tkinter import messagebox
 import time
-import datetime
+import threading
 import serial
 import serial.tools.list_ports
 from uboot import log
 from update_application import update_application
 from update_bootloader import update_bootloader
 from update_kernel import update_kernel
-import threading
+
 
 # class definitions
-class application_updater(threading.Thread):
+class ApplicationUpdater(threading.Thread):
     """
     A subclass of Thread, overriding the run() method.
     Allows for handling exceptions and showing a resulting message box.
     """
-    def __init__(self, port, serialno, log_widget):
+    def __init__(self, comport, serial_num, log_widget):
         threading.Thread.__init__(self)
-        self.port = port
-        self.serialno = serialno
+        self.port = comport
+        self.serialno = serial_num
         self.log_widget = log_widget
 
     def run(self):
         try:
             update_application(self.port, self.serialno, log_widget=self.log_widget)
             messagebox.showinfo("Success!", "Application update finished successfully.")
-        except Exception:
+        except (serial.SerialException, TypeError, ValueError, RuntimeError):
             messagebox.showerror("Error!", "Application update exited with errors.")
 
-class kernel_updater(threading.Thread):
+class KernelUpdater(threading.Thread):
     """
     A subclass of Thread, overriding the run() method.
     Allows for handling exceptions and showing a resulting message box.
     """
-    def __init__(self, port, log_widget):
+    def __init__(self, comport, log_widget):
         threading.Thread.__init__(self)
-        self.port = port
+        self.port = comport
         self.log_widget = log_widget
         self.firmware = {"boot_image": 'core-image-base-ccimx6sbc.boot.vfat',
                          "rootfs_image": 'core-image-base-ccimx6sbc.rootfs.ext4',
@@ -53,17 +53,17 @@ class kernel_updater(threading.Thread):
         try:
             update_kernel(self.port, self.firmware, log_widget=self.log_widget)
             messagebox.showinfo("Success!", "Kernel update finished successfully.")
-        except Exception:
+        except (serial.SerialException, TypeError, ValueError, RuntimeError):
             messagebox.showerror("Error!", "Kernel update exited with errors.")
 
-class bootloader_updater(threading.Thread):
+class BootloaderUpdater(threading.Thread):
     """
     A subclass of Thread, overriding the run() method.
     Allows for handling exceptions and showing a resulting message box.
     """
-    def __init__(self, port, log_widget):
+    def __init__(self, comport, log_widget):
         threading.Thread.__init__(self)
-        self.port = port
+        self.port = comport
         self.log_widget = log_widget
         self.image = 'u-boot-ccimx6qsbc.imx'
 
@@ -71,14 +71,14 @@ class bootloader_updater(threading.Thread):
         try:
             update_bootloader(self.port, self.image, log_widget=self.log_widget)
             messagebox.showinfo("Success!", "Bootloader update finished successfully.")
-        except Exception:
+        except (serial.SerialException, TypeError, ValueError, RuntimeError):
             messagebox.showerror("Error!", "Bootloader update exited with errors.")
 
 # general functions
 def thread_monitor():
     """
-    Checks the current threads and decides whether or not to enable GUI inputs. 
-    If any updater is in progress, the GUI inputs are disabled. 
+    Checks the current threads and decides whether or not to enable GUI inputs.
+    If any updater is in progress, the GUI inputs are disabled.
     """
     threads = [thread.name for thread in threading.enumerate()]
     terms = ['thread-update-app', 'thread-update-kernel', 'thread-update-bootloader']
@@ -86,45 +86,45 @@ def thread_monitor():
         disable_inputs()
     else:
         enable_inputs()
-    window.after(2000, thread_monitor)
+    WINDOW.after(2000, thread_monitor)
 
 def disable_inputs():
     """
-    Disables GUI inputs while crucial threads are running. 
+    Disables GUI inputs while crucial threads are running.
     """
-    port_label.configure(state='disabled')
-    ftdi_label.configure(state='disabled')
-    try_port_button.configure(state='disabled')
-    change_port_button.configure(state='disabled')
-    prog_bootloader_btn.configure(state='disabled')
-    prog_kernel_btn.configure(state='disabled')
-    prog_app_btn.configure(state='disabled')
-    build_label.configure(state='disabled')
-    unit_label.configure(state='disabled')
-    sn_label.configure(state='disabled')
-    build_spinbox.configure(state='disabled')
-    unit_spinbox.configure(state='disabled')
-    sn_update_btn.configure(state='disabled')
-    auto_detect_button.configure(state='disabled')
+    PORT_LABEL.configure(state='disabled')
+    FTDI_LABEL.configure(state='disabled')
+    TRY_PORT_BUTTON.configure(state='disabled')
+    CHANGE_PORT_BUTTON.configure(state='disabled')
+    PROG_BOOTLOADER_BTN.configure(state='disabled')
+    PROG_KERNEL_BTN.configure(state='disabled')
+    PROG_APP_BTN.configure(state='disabled')
+    BUILD_LABEL.configure(state='disabled')
+    UNIT_LABEL.configure(state='disabled')
+    SN_LABEL.configure(state='disabled')
+    BUILD_SPINBOX.configure(state='disabled')
+    UNIT_SPINBOX.configure(state='disabled')
+    SN_UPDATE_BTN.configure(state='disabled')
+    AUTO_DETECT_BUTTON.configure(state='disabled')
 
 def enable_inputs():
     """
-    Enables all GUI inputs. 
+    Enables all GUI inputs.
     """
-    port_label.configure(state='normal')
-    ftdi_label.configure(state='normal')
-    try_port_button.configure(state='normal')
-    change_port_button.configure(state='normal')
-    prog_bootloader_btn.configure(state='normal')
-    prog_kernel_btn.configure(state='normal')
-    prog_app_btn.configure(state='normal')
-    build_label.configure(state='normal')
-    unit_label.configure(state='normal')
-    sn_label.configure(state='normal')
-    build_spinbox.configure(state='normal')
-    unit_spinbox.configure(state='normal')
-    sn_update_btn.configure(state='normal')
-    auto_detect_button.configure(state='normal')
+    PORT_LABEL.configure(state='normal')
+    FTDI_LABEL.configure(state='normal')
+    TRY_PORT_BUTTON.configure(state='normal')
+    CHANGE_PORT_BUTTON.configure(state='normal')
+    PROG_BOOTLOADER_BTN.configure(state='normal')
+    PROG_KERNEL_BTN.configure(state='normal')
+    PROG_APP_BTN.configure(state='normal')
+    BUILD_LABEL.configure(state='normal')
+    UNIT_LABEL.configure(state='normal')
+    SN_LABEL.configure(state='normal')
+    BUILD_SPINBOX.configure(state='normal')
+    UNIT_SPINBOX.configure(state='normal')
+    SN_UPDATE_BTN.configure(state='normal')
+    AUTO_DETECT_BUTTON.configure(state='normal')
 
 # button click functions
 def change_port():
@@ -133,8 +133,8 @@ def change_port():
 
     Enables the entry box for manually entering the COM port.
     """
-    current_port_entry.configure(state='normal')
-    ftdi_label.configure(text="")
+    CURRENT_PORT_ENTRY.configure(state='normal')
+    FTDI_LABEL.configure(text="")
 
 def try_port():
     """
@@ -142,24 +142,26 @@ def try_port():
 
     Checks to see if the currently selected port is accessible.
     Upon success, a message box pops up and the entry box is disabled for further input.
-    Upon failure, a warning box pops up and the entry box is enabled for new input. 
+    Upon failure, a warning box pops up and the entry box is enabled for new input.
     """
-    comport = port.get()
+    comport = PORT.get()
     try:
         com = serial.Serial(comport, 115200, timeout=1)
         if com.name in [port.device for port in serial.tools.list_ports.grep("0403")]:
-            ftdi_label.configure(text="(FTDI Device detected)")
-            log("Comport {} is an FTDI device".format(comport), print_log=False, widget=text)
+            FTDI_LABEL.configure(text="(FTDI Device detected)")
+            log("Comport {} is an FTDI device".format(comport), print_log=False,
+                widget=LOGWINDOW)
         else:
-            ftdi_label.configure(text="(Not an FTDI device)")
-            log("Comport {} is not an FTDI device".format(comport), print_log=False, widget=text)
+            FTDI_LABEL.configure(text="(Not an FTDI device)")
+            log("Comport {} is not an FTDI device".format(comport), print_log=False,
+                widget=LOGWINDOW)
         com.close()
-        log("Comport {} is ready to use".format(comport), print_log=False, widget=text)
+        log("Comport {} is ready to use".format(comport), print_log=False, widget=LOGWINDOW)
         messagebox.showinfo("Success!", "Comport {} is ready to use".format(comport))
-        current_port_entry.configure(state='disabled')
+        CURRENT_PORT_ENTRY.configure(state='disabled')
     except serial.SerialException:
-        log("Could not access comport {}".format(comport), print_log=False, widget=text)
-        ftdi_label.configure(text="(unavailable)")
+        log("Could not access comport {}".format(comport), print_log=False, widget=LOGWINDOW)
+        FTDI_LABEL.configure(text="(unavailable)")
         messagebox.showwarning("Warning!", "Could not access comport {}".format(comport))
 
 def auto_detect():
@@ -172,26 +174,26 @@ def auto_detect():
     If no FTDI devices are found, a warning box pops up and the user may manually
     enter a selected COM port.
     """
-    auto_detect_button.configure(bg='SystemButtonFace')
-    current_port_entry.configure(state='normal')
+    AUTO_DETECT_BUTTON.configure(bg='SystemButtonFace')
+    CURRENT_PORT_ENTRY.configure(state='normal')
     enable_inputs()
     usb_serial_ports = []
     # search for FTDI devices by vendor ID
-    for port in serial.tools.list_ports.grep("0403"):
-        usb_serial_ports.append(port.device)
+    for comport in serial.tools.list_ports.grep("0403"):
+        usb_serial_ports.append(comport.device)
     if usb_serial_ports == []:
         # no FTDI devices found
         port_val = ""
-        log("Auto-detect found no FTDI comports", print_log=False, widget=text)
+        log("Auto-detect found no FTDI comports", print_log=False, widget=LOGWINDOW)
         messagebox.showwarning("Warning!", "No FTDI comports were found on the system. " \
                                "Please manually enter the comport you would like to use " \
                                "in the entry box or plug in an FTDI device and try again. ")
     elif len(usb_serial_ports) > 1:
         # found multiple FTDI devices
         port_val = usb_serial_ports[0]
-        log("Auto-detect found multiple FTDI comports: {}".format(usb_serial_ports), 
-            print_log=False, widget=text)
-        messagebox.showinfo("Multiple devices found", 
+        log("Auto-detect found multiple FTDI comports: {}".format(usb_serial_ports),
+            print_log=False, widget=LOGWINDOW)
+        messagebox.showinfo("Multiple devices found",
                             "Multiple FTDI comports were found on the system. " \
                             "The first device found was automatically selected. If you " \
                             "want to use another device, please click the Change Port " \
@@ -200,15 +202,16 @@ def auto_detect():
     else:
         # found only one FTDI device
         port_val = usb_serial_ports[0]
-        log("Auto-detect found FTDI comport: {}".format(usb_serial_ports[0]), print_log=False, widget=text)
-    current_port_entry.configure(state='normal')
-    current_port_entry.delete(0, 20)
+        log("Auto-detect found FTDI comport: {}".format(usb_serial_ports[0]),
+            print_log=False, widget=LOGWINDOW)
+    CURRENT_PORT_ENTRY.configure(state='normal')
+    CURRENT_PORT_ENTRY.delete(0, 20)
     if port_val != "":
-        current_port_entry.insert(0, port_val)
-        current_port_entry.configure(state='disabled')
+        CURRENT_PORT_ENTRY.insert(0, port_val)
+        CURRENT_PORT_ENTRY.configure(state='disabled')
     try_port()
     # since this button is clicked at GUI start, initiate the thread monitor now
-    window.after(1000, thread_monitor)
+    WINDOW.after(1000, thread_monitor)
 
 def program_bootloader():
     """
@@ -216,15 +219,15 @@ def program_bootloader():
 
     Instantiates a thread object for calling the bootloader update tool.
     """
-    comport = port.get()
+    comport = PORT.get()
     if messagebox.askyesno("Progam Bootloader?", "Do you want to program the bootloader?"):
-        messagebox.showinfo("Boot From SD Card", "To program the bootloader from the SD card, " \
-                            "you must boot from the SD card by holding the programming " \
-                            "button while turning on the unit. Please do so now, " \
-                            "then click OK.")
-        log("Running bootloader programming tool...", print_log=False, widget=text)
+        messagebox.showinfo("Boot From SD Card", "To program the bootloader from the " \
+                            "SD card, you must boot from the SD card by holding the " \
+                            "programming button while turning on the unit. Please do " \
+                            "so now, then click OK.")
+        log("Running bootloader programming tool...", print_log=False, widget=LOGWINDOW)
         time.sleep(5)
-        update_btl_thread = bootloader_updater(comport, text)
+        update_btl_thread = BootloaderUpdater(comport, LOGWINDOW)
         update_btl_thread.name = 'thread-update-bootloader'
         update_btl_thread.start()
 
@@ -234,12 +237,13 @@ def program_kernel():
 
     Instantiates a thread object for calling the kernel update tool.
     """
-    comport = port.get()
+    comport = PORT.get()
     if messagebox.askyesno("Progam Kernel?", "Do you want to program the kernel?"):
-        messagebox.showinfo("Turn OFF Device", "It is recommended to start the kernel update procedure from an " \
+        messagebox.showinfo("Turn OFF Device", "It is recommended to start the kernel " \
+                            "update procedure from an " \
                             "OFF state. Please power the device OFF then click OK.")
-        log("Running kernel programming tool...", print_log=False, widget=text)
-        update_os_thread = kernel_updater(comport, text)
+        log("Running kernel programming tool...", print_log=False, widget=LOGWINDOW)
+        update_os_thread = KernelUpdater(comport, LOGWINDOW)
         update_os_thread.name = 'thread-update-kernel'
         update_os_thread.start()
 
@@ -249,12 +253,13 @@ def program_application():
 
     Instantiates a thread object for calling the application update tool.
     """
-    comport = port.get()
+    comport = PORT.get()
     update_serialno()
-    sn = serialno.get()
-    if messagebox.askyesno("Progam application?", "Do you want to program the application software with serial number {}?".format(sn)):
-        log("Running application programming tool...", print_log=False, widget=text)
-        update_app_thread = application_updater(comport, sn, text)
+    serial_num = SERIALNO.get()
+    if messagebox.askyesno("Progam application?", "Do you want to program the application " \
+                            "software with serial number {}?".format(serial_num)):
+        log("Running application programming tool...", print_log=False, widget=LOGWINDOW)
+        update_app_thread = ApplicationUpdater(comport, serial_num, LOGWINDOW)
         update_app_thread.name = 'thread-update-app'
         update_app_thread.start()
 
@@ -262,80 +267,91 @@ def update_serialno():
     """
     GUI Button: Update Serial Number
 
-    Updates the selected serial number entry box with the current selections. 
+    Updates the selected serial number entry box with the current selections.
     """
-    num = unit.get()
-    sn = 'BIO-' + build.get() + '-' + f'{num:08}'
-    sn_entry_box.configure(state='normal')
-    sn_entry_box.delete(0, 20)
-    sn_entry_box.insert(0, sn)
-    sn_entry_box.configure(state='disabled')
+    num = UNIT.get()
+    serial_num = 'BIO-' + BUILD.get() + '-' + f'{num:08}'
+    SN_ENTRY_BOX.configure(state='normal')
+    SN_ENTRY_BOX.delete(0, 20)
+    SN_ENTRY_BOX.insert(0, serial_num)
+    SN_ENTRY_BOX.configure(state='disabled')
 
 # define the GUI window
-window = tkinter.Tk()
-window.title("Allergen Sensor Serial Programming Tool")
+WINDOW = tkinter.Tk()
+WINDOW.title("Allergen Sensor Serial Programming Tool")
 
 # define the frames in the window
-outputFrame = tkinter.Frame(window, height=600, width=800)
-inputFrame = tkinter.Frame(window, height=600, width=500)
-outputFrame.pack(side=tkinter.LEFT)
-inputFrame.pack(side=tkinter.RIGHT)
-inputFrame.pack_propagate(0)
-inputFrame.grid_propagate(0)
+OUTPUTFRAME = tkinter.Frame(WINDOW, height=600, width=800)
+INPUTFRAME = tkinter.Frame(WINDOW, height=600, width=500)
+OUTPUTFRAME.pack(side=tkinter.LEFT)
+INPUTFRAME.pack(side=tkinter.RIGHT)
+INPUTFRAME.pack_propagate(0)
+INPUTFRAME.grid_propagate(0)
 
 # define the output window text box
-text = tkst.ScrolledText(outputFrame, height=40, width=100)
-text.pack()
-text.configure(state='disabled')
+LOGWINDOW = tkst.ScrolledText(OUTPUTFRAME, height=40, width=100)
+LOGWINDOW.pack()
+LOGWINDOW.configure(state='disabled')
 
 # define the inputs
 # port selection labels and change-port/try-port buttons
-port = tkinter.StringVar()
-port_label = tkinter.Label(inputFrame, text="Port: ", state='disabled')
-port_label.grid(row=0, column=0, padx=5, pady=5)
-current_port_entry = tkinter.Entry(inputFrame, textvariable=port, state='disabled')
-current_port_entry.grid(row=0, column=1, padx=5, pady=5)
-ftdi_label = tkinter.Label(inputFrame, text="", state='disabled')
-ftdi_label.grid(row=1, column=1, padx=5, pady=0)
-try_port_button = tkinter.Button(inputFrame, text="Try Port", command=try_port, state='disabled')
-try_port_button.grid(row=0, column=2, padx=5, pady=5)
-change_port_button = tkinter.Button(inputFrame, text="Change Port", command=change_port, state='disabled')
-change_port_button.grid(row=0, column=3, padx=5, pady=5)
-auto_detect_button = tkinter.Button(inputFrame, text="Auto Detect", command=auto_detect, bg='green')
-auto_detect_button.grid(row=1, column=3, padx=5, pady=5)
+PORT = tkinter.StringVar()
+PORT_LABEL = tkinter.Label(INPUTFRAME, text="Port: ", state='disabled')
+PORT_LABEL.grid(row=0, column=0, padx=5, pady=5)
+CURRENT_PORT_ENTRY = tkinter.Entry(INPUTFRAME, textvariable=PORT, state='disabled')
+CURRENT_PORT_ENTRY.grid(row=0, column=1, padx=5, pady=5)
+FTDI_LABEL = tkinter.Label(INPUTFRAME, text="", state='disabled')
+FTDI_LABEL.grid(row=1, column=1, padx=5, pady=0)
+TRY_PORT_BUTTON = tkinter.Button(INPUTFRAME, text="Try Port", command=try_port,
+                                 state='disabled')
+TRY_PORT_BUTTON.grid(row=0, column=2, padx=5, pady=5)
+CHANGE_PORT_BUTTON = tkinter.Button(INPUTFRAME, text="Change Port", command=change_port,
+                                    state='disabled')
+CHANGE_PORT_BUTTON.grid(row=0, column=3, padx=5, pady=5)
+AUTO_DETECT_BUTTON = tkinter.Button(INPUTFRAME, text="Auto Detect", command=auto_detect,
+                                    bg='green')
+AUTO_DETECT_BUTTON.grid(row=1, column=3, padx=5, pady=5)
 
 # programming buttons
-prog_bootloader_btn = tkinter.Button(inputFrame, text="Program Bootloader", width=30, command=program_bootloader, state='disabled')
-prog_bootloader_btn.grid(row=2, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
-prog_kernel_btn = tkinter.Button(inputFrame, text="Program Kernel", width=30, command=program_kernel, state='disabled')
-prog_kernel_btn.grid(row=4, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
-prog_app_btn = tkinter.Button(inputFrame, text="Program Application", width=30, command=program_application, state='disabled')
-prog_app_btn.grid(row=6, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
+PROG_BOOTLOADER_BTN = tkinter.Button(INPUTFRAME, text="Program Bootloader", width=30,
+                                     command=program_bootloader, state='disabled')
+PROG_BOOTLOADER_BTN.grid(row=2, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
+PROG_KERNEL_BTN = tkinter.Button(INPUTFRAME, text="Program Kernel", width=30,
+                                 command=program_kernel, state='disabled')
+PROG_KERNEL_BTN.grid(row=4, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
+PROG_APP_BTN = tkinter.Button(INPUTFRAME, text="Program Application", width=30,
+                              command=program_application, state='disabled')
+PROG_APP_BTN.grid(row=6, column=0, rowspan=2, columnspan=2, padx=5, pady=20)
 
 # serial number entries and spinbox
-build_label = tkinter.Label(inputFrame, text="Build: ", state='disabled')
-build_label.grid(row=8, column=0, padx=5, pady=20)
-unit_label = tkinter.Label(inputFrame, text="Unit No.: ", state='disabled')
-unit_label.grid(row=10, column=0, padx=5, pady=20)
-sn_label = tkinter.Label(inputFrame, text="SerialNo: ", state='disabled')
-sn_label.grid(row=12, column=0, padx=5, pady=20)
-build = tkinter.StringVar()
-build_spinbox = tkinter.Spinbox(inputFrame, values=('CV1', 'CV2', 'DV1', 'DV2', 'PV1', 'PV2', 'XXX'), textvariable=build, state='disabled')
-build_spinbox.grid(row=8, column=1, padx=5, pady=20)
-unit = tkinter.IntVar()
-unit_spinbox = tkinter.Spinbox(inputFrame, from_=0, to=99999999, textvariable=unit, state='disabled')
-unit_spinbox.grid(row=10, column=1, padx=5, pady=20)
-serialno = tkinter.StringVar()
-sn_entry_box = tkinter.Entry(inputFrame, textvariable=serialno, state='disabled')
-sn_entry_box.grid(row=12, column=1, padx=5, pady=20)
-sn_entry_box.delete(0)
-sn_entry_box.configure(state='disabled')
+BUILD_LABEL = tkinter.Label(INPUTFRAME, text="Build: ", state='disabled')
+BUILD_LABEL.grid(row=8, column=0, padx=5, pady=20)
+UNIT_LABEL = tkinter.Label(INPUTFRAME, text="Unit No.: ", state='disabled')
+UNIT_LABEL.grid(row=10, column=0, padx=5, pady=20)
+SN_LABEL = tkinter.Label(INPUTFRAME, text="SerialNo: ", state='disabled')
+SN_LABEL.grid(row=12, column=0, padx=5, pady=20)
+BUILD = tkinter.StringVar()
+BUILD_SPINBOX = tkinter.Spinbox(INPUTFRAME,
+                                values=('CV1', 'CV2', 'DV1', 'DV2', 'PV1', 'PV2', 'XXX'),
+                                textvariable=BUILD, state='disabled')
+BUILD_SPINBOX.grid(row=8, column=1, padx=5, pady=20)
+UNIT = tkinter.IntVar()
+UNIT_SPINBOX = tkinter.Spinbox(INPUTFRAME, from_=0, to=99999999, textvariable=UNIT,
+                               state='disabled')
+UNIT_SPINBOX.grid(row=10, column=1, padx=5, pady=20)
+SERIALNO = tkinter.StringVar()
+SN_ENTRY_BOX = tkinter.Entry(INPUTFRAME, textvariable=SERIALNO, state='disabled')
+SN_ENTRY_BOX.grid(row=12, column=1, padx=5, pady=20)
+SN_ENTRY_BOX.delete(0)
+SN_ENTRY_BOX.configure(state='disabled')
 update_serialno()
-sn_update_btn = tkinter.Button(inputFrame, text="Update Serial No.", command=update_serialno, state='disabled')
-sn_update_btn.grid(row=12, column=2, padx=5, pady=20)
+SN_UPDATE_BTN = tkinter.Button(INPUTFRAME, text="Update Serial No.",
+                               command=update_serialno, state='disabled')
+SN_UPDATE_BTN.grid(row=12, column=2, padx=5, pady=20)
 
 # main GUI loop
-log("Welcome to the U-Boot device update tool!", print_log=False, widget=text)
-log("Please insert an SD card into a device and connect to the serial port with an FTDI serial converter.", print_log=False, widget=text)
-log("Click Auto Detect to find serial ports and begin...", print_log=False, widget=text)
-window.mainloop()
+log("Welcome to the U-Boot device update tool!", print_log=False, widget=LOGWINDOW)
+log("Please insert an SD card into a device and connect to the serial port with an FTDI " \
+    "serial converter.", print_log=False, widget=LOGWINDOW)
+log("Click Auto Detect to find serial ports and begin...", print_log=False, widget=LOGWINDOW)
+WINDOW.mainloop()

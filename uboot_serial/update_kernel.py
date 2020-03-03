@@ -67,7 +67,7 @@ def update_kernel(port, firmware, log_widget=None):
             rootfs_image    The name of the rootfs image file to be flashed
             recovery_image  The name of the recovery image file to be flashed
         log_widget          The tkinter scrolled text object for printing log output to GUI.
-                            Only used by GUI. Default is None when called by command line. 
+                            Only used by GUI. Default is None when called by command line.
 
     Returns
         none
