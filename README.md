@@ -264,3 +264,7 @@ To program the application, simply click **Program Application**
 
 After programming a device, a QR code should be saved and printed to label the unit. Click the **Generate QR Code** button to save the QR code as a PNG. 
 The format of contents of the QR code is "Allergen_{SERIALNO}" and the filename is identical to the contents.
+
+![Generate QR Code](images/qr_code.JPG)
+
+![QR Code](images/Allergen_BIO-CV1-00000000.png)
