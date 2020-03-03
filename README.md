@@ -87,7 +87,7 @@ All the tools have fields with default values for image file names that can be o
 The micro SD card should be FAT formatted and flashed with the U-Boot image in a separate BOOT partition and the other image files in a separate partition.
 If all default filenames are used, the SD card contents should be as follows:
 
-![SD Card Contents](images/sd_card_contents.jpg)
+![SD Card Contents](images/sd_card_contents.JPG)
 
 ### Python
 
@@ -194,7 +194,7 @@ optional arguments:
 
 #### Introduction to the GUI
 
-![GUI Front Panel](images/front_page.jpg)
+![GUI Front Panel](images/front_page.JPG)
 
 #### Serial Port Selection
 
@@ -202,16 +202,16 @@ To select the serial port, click **Auto Detect** to automatically find an FTDI D
 If you are using a serial converter device that is not recognized as an FTDI device, you can click **Change Port** and manually enter the COM port name (you can find this in the Device Manager).
 After entering a port manually, you can click **Try Port** to test if the port is available.
 
-![Try Port](images/try_port.jpg)
+![Try Port](images/try_port.JPG)
 
 #### Programming the Bootloader
 
 When programming the bootloader, a prompt pops up instructing the user to boot from SD card by holding the programming button and power on the device.
 Once the device has been booted from the SD card, the user may click OK and programming will begin.
 
-![Boot From SD Card Dialog](images/boot_from_card_dialog.jpg)
+![Boot From SD Card Dialog](images/boot_from_card_dialog.JPG)
 
-![Program Bootloader](images/program_bootloader.jpg)
+![Program Bootloader](images/program_bootloader.JPG)
 
 #### Programming the Yocto Kernel
 
@@ -220,9 +220,9 @@ Once the dialog has been acknowledge and the device has booted from eMMC rather 
 Keeping a watch on the output log, a message indicates that the device must then be turned ON.
 After turning on the device, programming begins and a success message is given after it is complete.
 
-![Turn Device OFF Dialog](images/turn_device_off_dialog.jpg)
+![Turn Device OFF Dialog](images/turn_device_off_dialog.JPG)
 
-![Program Kernel](images/program_kernel.jpg)
+![Program Kernel](images/program_kernel.JPG)
 
 #### Setting the Serial Number and Programming the Application
 
@@ -231,8 +231,8 @@ Both fields, _Build_ and _Unit No._ are both able to be overridden, but the comp
 Requirements for a valid serial number are to be 16 characters, the first 8 must be alpha-numeric and all caps, the last 8 must be all numeric.
 To compile the serial number, click the **Update Serial No.** button. 
 
-![Update Serial Number](images/update_sn.jpg)
+![Update Serial Number](images/update_sn.JPG)
 
 To program the application, simply click **Program Application**
 
-![Program Application](images/program_application.jpg)
+![Program Application](images/program_application.JPG)
