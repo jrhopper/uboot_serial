@@ -9,6 +9,7 @@ For any questions, contact the author: steven.lowery@honeywell.com
 
 No installation required, aside from Python and the pyserial package.
 The GUI has a feature for creating QR codes which requires the qrcode package.
+A portable Windows executable is available for machines without Python installations. 
 ```
 pip install -r requirements.txt
 ```
