@@ -9,3 +9,4 @@ dist
 *.ipynb
 .ipynb_checkpoints/
 .mypy_cache/
+QR_codes/
