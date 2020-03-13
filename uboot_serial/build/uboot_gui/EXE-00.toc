@@ -27,6 +27,9 @@
   ('pyiboot01_bootstrap',
    'c:\\users\\h247073\\anaconda3\\envs\\ubootgui_py37\\lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
    'PYSOURCE'),
+  ('pyi_rth_usb',
+   'c:\\users\\h247073\\anaconda3\\envs\\ubootgui_py37\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_usb.py',
+   'PYSOURCE'),
   ('pyi_rth__tkinter',
    'c:\\users\\h247073\\anaconda3\\envs\\ubootgui_py37\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth__tkinter.py',
    'PYSOURCE'),
@@ -39,7 +42,7 @@
  [],
  False,
  False,
- 1583267957,
+ 1584126750,
  [('run.exe',
    'c:\\users\\h247073\\anaconda3\\envs\\ubootgui_py37\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',
    'EXECUTABLE')])

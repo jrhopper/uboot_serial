@@ -5,10 +5,6 @@ to the U-Boot device. The GUI uses the tkinter framework.
 """
 
 import os
-try:
-    import qrcode
-except ImportError:
-    pass
 import tkinter
 import tkinter.scrolledtext as tkst
 from tkinter import messagebox
@@ -112,6 +108,7 @@ def disable_inputs():
     SN_UPDATE_BTN.configure(state='disabled')
     AUTO_DETECT_BUTTON.configure(state='disabled')
     GENERATE_QR_BTN.configure(state='disabled')
+    PRINT_QR_BTN.configure(state='disabled')
 
 def enable_inputs():
     """
@@ -132,6 +129,7 @@ def enable_inputs():
     SN_UPDATE_BTN.configure(state='normal')
     AUTO_DETECT_BUTTON.configure(state='normal')
     GENERATE_QR_BTN.configure(state='normal')
+    PRINT_QR_BTN.configure(state='normal')
 
 # button click functions
 def change_port():
@@ -283,19 +281,116 @@ def update_serialno():
     SN_ENTRY_BOX.insert(0, serial_num)
     SN_ENTRY_BOX.configure(state='disabled')
 
-def generate_qrcode(qrcode_text):
+def generate_qrcode():
     """
     GUI Button: Generate QR Code
 
     Generates a QR code of the current serial number and saves as PNG.
     """
+    try:
+        import qrcode
+    except ImportError:
+        messagebox.showerror("Module ImportError", "The qrcode module is not installed.")
+        return
+    update_serialno()
+    qrcode_text = "Allergen_"+SERIALNO.get()
     if not os.path.exists("./QR_codes"):
         os.mkdir("./QR_codes")
-    img = qrcode.make(qrcode_text)
     path = os.getcwd() + "\\QR_codes\\{}.png".format(qrcode_text)
-    img.save(path)
+    qrcode.make(qrcode_text, box_size=8, border=1).crop((7, 7, 209, 209)).save(path)
     log("QR code saved to {}".format(path), print_log=False, widget=LOGWINDOW)
     messagebox.showinfo("File Saved", "QR code has been saved as {}".format(path))
+
+def print_qr_label():
+    """
+    GUI Button: Print QR Label
+
+    Prints a QR code label for the current serial number 
+    to a connected Brother QL-500 label printer.
+    Requires brother_ql module and libusb0.dll installed on the system.
+    """
+    # check if the Brother Python module is installed
+    try:
+        import brother_ql
+    except ImportError:
+        messagebox.showerror("Module ImportError", "The brother_ql module is not installed.")
+        return
+    
+    # Check if the PyUSB module is installed
+    try:
+        import usb.core
+        import usb.libloader
+    except ImportError:
+        messagebox.showerror("Module ImportError", "The pyusb module is not installed.")
+        return
+    
+    # Check if the libusb0 library is installed and discoverable
+    lib = usb.libloader.locate_library(('usb', 'libusb0'))
+    if not lib:
+        messagebox.showerror("USB Library Not Found", "The shared library libusb0.dll " \
+                             "could not be found in PATH. Make sure that libusb0.dll is " \
+                             "installed and discoverable in the PATH environment variable.")
+        return
+    
+    # Try to load the libusb0 library
+    try:
+        import ctypes
+        ctypes.CDLL(lib)
+        loaded_lib = usb.libloader.load_library(lib)
+        if not loaded_lib:
+            messagebox.showerror("Library Load Failed",
+                                 "The library {} could not be loaded by the " \
+                                 "libloader in PyUSB.".format(lib))
+            return
+    except OSError:
+        messagebox.showerror("Library Load Failed",
+                             "The library {} could not be loaded. The library may not be " \
+                             "the proper type. This application requires a 32-bit library " \
+                             "libusb0.dll discoverable in PATH.".format(lib))
+        return
+    
+    # Try to setup the library with USB functions
+    try:
+        from usb.backend.libusb0 import _setup_prototypes as setup_prototypes
+        setup_prototypes(loaded_lib)
+        loaded_lib.usb_init()
+    except:
+        messagebox.showerror("Library Init Failed",
+                             "The library {} could not be Initialized. ".format(loaded_lib))
+
+    # Check if the PyUSB API can access the libusb0 backend
+    import usb.backend.libusb0 as libusb0
+    if not libusb0.get_backend():
+        messagebox.showerror("Cannot Access Backend", 
+                             "The libusb0 backend is not accessible by PyUSB.")
+        return
+    
+    try:
+        if not usb.core.find(idVendor=0x04f9):
+            messagebox.showerror("Cannot Find Device", 
+                                 "The Brother QL-500 printer device could not be found.")
+            return
+    except usb.core.NoBackendError:
+        messagebox.showerror("Could Not Find Backend", 
+                                 "The backend - PyUSB (libusb0.dll) - was not found.")
+        return
+    
+    update_serialno()
+    qrcode_text = "Allergen_"+SERIALNO.get()
+    path = os.getcwd() + "\\QR_codes\\{}.png".format(qrcode_text)
+    if not os.path.exists(path):
+        generate_qrcode()
+    from brother_ql.conversion import convert
+    from brother_ql.backends.helpers import send
+    from brother_ql.raster import BrotherQLRaster
+    qlr = BrotherQLRaster('QL-500')
+    instructions = convert(qlr=qlr, images=[path], label='23x23')
+    send(instructions=instructions, printer_identifier='usb://0x04f9:0x2015',
+         backend_identifier='pyusb', blocking=True)
+    send(instructions=instructions, printer_identifier='usb://0x04f9:0x2015',
+         backend_identifier='pyusb', blocking=True)
+    log("Label print completed.", print_log=False, widget=LOGWINDOW)
+    messagebox.showinfo("Finished", "Label {} printing has completed".format(qrcode_text))
 
 # define the GUI window
 WINDOW = tkinter.Tk()
@@ -370,11 +465,15 @@ SN_UPDATE_BTN = tkinter.Button(INPUTFRAME, text="Update Serial No.",
                                command=update_serialno, state='disabled')
 SN_UPDATE_BTN.grid(row=12, column=2, padx=5, pady=20)
 
-# QR code generator button
+# QR code generator and label print buttons
 GENERATE_QR_BTN = tkinter.Button(INPUTFRAME, text="Generate QR Code",
-                                 command=lambda: generate_qrcode("Allergen_"+SERIALNO.get()),
+                                 command=generate_qrcode,
                                  state='disabled')
 GENERATE_QR_BTN.grid(row=14, column=2, padx=5, pady=20)
+PRINT_QR_BTN = tkinter.Button(INPUTFRAME, text="Print QR Label",
+                                 command=print_qr_label,
+                                 state='disabled')
+PRINT_QR_BTN.grid(row=16, column=2, padx=5, pady=20)
 
 # main GUI loop
 log("Welcome to the U-Boot device update tool!", print_log=False, widget=LOGWINDOW)
