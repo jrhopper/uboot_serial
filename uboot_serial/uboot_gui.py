@@ -5,6 +5,8 @@ to the U-Boot device. The GUI uses the tkinter framework.
 """
 
 import os
+import io
+import sys
 import tkinter
 import tkinter.scrolledtext as tkst
 from tkinter import messagebox
@@ -325,18 +327,18 @@ def print_qr_label():
         return
     
     # Check if the libusb0 library is installed and discoverable
-    lib = usb.libloader.locate_library(('usb', 'libusb0'))
+    lib = usb.libloader.locate_library(('usb', 'libusb0'), find_library=lambda x: "libusb0.dll")
     if not lib:
         messagebox.showerror("USB Library Not Found", "The shared library libusb0.dll " \
-                             "could not be found in PATH. Make sure that libusb0.dll is " \
-                             "installed and discoverable in the PATH environment variable.")
+                             "could not be found in project directory. Make sure that " \
+                             "libusb0.dll is in the project directory.")
         return
     
     # Try to load the libusb0 library
     try:
         import ctypes
-        ctypes.CDLL(lib)
-        loaded_lib = usb.libloader.load_library(lib)
+        #ctypes.CDLL("libusb0.dll")
+        loaded_lib = usb.libloader.load_library("libusb0.dll")
         if not loaded_lib:
             messagebox.showerror("Library Load Failed",
                                  "The library {} could not be loaded by the " \
@@ -346,7 +348,7 @@ def print_qr_label():
         messagebox.showerror("Library Load Failed",
                              "The library {} could not be loaded. The library may not be " \
                              "the proper type. This application requires a 32-bit library " \
-                             "libusb0.dll discoverable in PATH.".format(lib))
+                             "libusb0.dll discoverable in the project directory.".format(lib))
         return
     
     # Try to setup the library with USB functions
@@ -360,7 +362,7 @@ def print_qr_label():
 
     # Check if the PyUSB API can access the libusb0 backend
     import usb.backend.libusb0 as libusb0
-    if not libusb0.get_backend():
+    if not libusb0.get_backend(find_library=lambda x: "libusb0.dll"):
         messagebox.showerror("Cannot Access Backend", 
                              "The libusb0 backend is not accessible by PyUSB.")
         return
@@ -375,11 +377,14 @@ def print_qr_label():
                                  "The backend - PyUSB (libusb0.dll) - was not found.")
         return
     
+    # Check if the QR code exists, if not, create it
     update_serialno()
     qrcode_text = "Allergen_"+SERIALNO.get()
     path = os.getcwd() + "\\QR_codes\\{}.png".format(qrcode_text)
     if not os.path.exists(path):
         generate_qrcode()
+
+    # Print the lable with brother_ql
     from brother_ql.conversion import convert
     from brother_ql.backends.helpers import send
     from brother_ql.raster import BrotherQLRaster
@@ -389,6 +394,8 @@ def print_qr_label():
          backend_identifier='pyusb', blocking=True)
     send(instructions=instructions, printer_identifier='usb://0x04f9:0x2015',
          backend_identifier='pyusb', blocking=True)
+
+    # Log message and finish
     log("Label print completed.", print_log=False, widget=LOGWINDOW)
     messagebox.showinfo("Finished", "Label {} printing has completed".format(qrcode_text))
 
