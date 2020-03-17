@@ -7,6 +7,13 @@ In order to do so, the script must have a special API to communicate with the pr
 The GUI executable contains the API pre-packaged, however the API must make use of a C-library called _libusb0.dll_, and in order for the library to have access to the hardware, a special driver must be installed.
 This driver, and all the links to the libusb0 library will be setup through a tool called a **filter wizard** which you will install now.
 
+Procedure:
+
+- Step 1: [Plug in the Brother QL-500 and install the plug-n-play driver](#step-1-plug-in-the-brother-ql-500-and-install-the-plug-n-play-driver) 
+- Step 2: [Install LibUSB-Win32](#step-2-install-libusb-win32) 
+- Step 3: [Create a filter for the QL-500 printer](#step-3-create-a-filter-for-the-ql-500-printer) 
+- Step 4: [Test the filter](#step-4-test-the-filter) 
+
 ## Step 1: Plug in the Brother QL-500 and install the plug-n-play driver
 
 Plug the Brother QL-500 printer into an outlet and plug the USB cable into the computer.

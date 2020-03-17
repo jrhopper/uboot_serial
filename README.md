@@ -1,18 +1,59 @@
-# Programming tool for updating devices with U-Boot via SD card and serial port
+# Programming Tool for Updating Devices with U-Boot via SD Card and Serial Port
 
 This tool will automatically install uboot images, kernel images, and application images for the device.
 This tool is specific to a device and may not be used for other uboot devices.
 
 For any questions, contact the author: steven.lowery@honeywell.com
 
-# Getting Started
+Table of contents:
+1. [Getting Started](#getting-started)
+2. [Setup](#setup)
+	1. [Basic Setup](#basic-setup)
+	2. [Serial Port Access](#serial-port-access)
+	3. [Python and Portable EXE Setup](#python-and-portable-exe-setup)
+		- [(OPTIONAL) Python Setup](#optional-python-setup)
+		- [Portable EXE Setup (Windows Only)](#portable-exe-setup-windows-only)
+	4. [Label Printer Setup](#label-printer-setup)
+3. [Installation](#installation)
+	1. [GUI Installation](#gui-installation)
+	2. [Portable Windows EXE Installation](#portable-windows-exe-installation)
+	3. [Printer Installation](#printer-installation)
+4. [Dependencies](#dependencies)
+	1. [Command Line Dependencies](#command-line-dependencies)
+	2. [GUI Dependencies](#gui-dependencies)
+	3. [Brother QL-500 Printer Dependencies](#brother-ql-500-printer-dependencies)
+5. [Usage](#usage)
+	1. [SD Card Contents](#sd-card-contents)
+	2. [Python](#python)
+		- [Bootloader](#bootloader)
+		- [Kernel](#kernel)
+		- [Application](#application)
+		- [QR Code](#qr-code)
+	3. [Command Line](#command-line)
+		- [Programming the Bootloader](#programming-the-bootloader)
+		- [Programming the Yocto Kernel](#programming-the-yocto-kernel)
+		- [Installing the Application](#installing-the-application)
+		- [Generating the QR Code](#generating-the-qr-code)
+	4. [GUI](#gui)
+		- [Introduction to the GUI](#introduction-to-the-gui)
+		- [Serial Port Selection](#serial-port-selection)
+		- [Programming the Bootloader from GUI](#programming-the-bootloader-from-gui)
+		- [Programming the Yocto Kernel from GUI](#programming-the-yocto-kernel-from-gui)
+		- [Setting the Serial Number and Installing the Application from GUI](#setting-the-serial-number-and-installing-the-application-from-gui)
+		- [Generating the QR Code from GUI](#generating-the-qr-code-from-gui)
+		- [Printing the QR Code Labels from GUI](#printing-the-qr-code-labels-from-gui)
+		
 
-Run the program by navigating to _uboot_serial/dist/uboot_gui.exe_
+## Getting Started
 
-# Setup
+Download or clone the latest released version at <https://github.com/stevenlowery011/uboot_serial/releases>
+If the file is zipped, unzip it. 
+Run the program by navigating to `uboot_serial/dist/uboot_gui.exe`
+
+## Setup
 
 This program was created to flash new firmware onto the Allergen Sensing device.
-It follows the instruction document given in [docs/Allergen_firmware_flashing.pdf](docs/Allergen_firmware_flashing.pdf).
+It follows the procedure document given in [docs/Allergen_firmware_flashing.pdf](docs/Allergen_firmware_flashing.pdf).
 
 
 This program contains three command line tools for programming the bootloader, Yocto kernel, and application to the device.
@@ -22,7 +63,6 @@ The images and application files must be stored on an SD card which is inserted 
 **The program does not load the firmware from the computer to the device, it simply points to firmware images on the SD card.**
 
 ### Basic Setup
-
 The components you will need for this setup are as follows:
 1. Formatted, bootable, SD card with firmware images
 2. USB-to-serial converter (ideally FTDI)
@@ -30,39 +70,43 @@ The components you will need for this setup are as follows:
 4. Allergen sensing device
 5. Small object for pressing the programming button (paper clip, pen, etc.)
 
-![Components](images/_.JPG)
+![Components](images/components.JPG)
 
 You will first need access to the programming port, SD card slot, and programming button on the device.
 To access these ports, you will need to remove the lower rubber bumper from the device.
 
-![Programming Access](images/_.JPG)
+![Programming Access](images/programming-access.JPG)
 
 Second, you will need to have the SD card properly formatted.
 The easiest way to accomplish this is to acquire a cloned image from the firmware developers and simply flash this image to your card.
 After flashing the image to your card, you will have a bootable and formatted card with a separate storage partition. 
-You can simply copy new files to the storage partition via a microSD card converter and plugging it into your computer. 
+You can simply copy new files to the storage partition via a microSD card converter by plugging it into your computer. 
 A good flashing tool to use on Windows is [Balena Etcher](https://www.balena.io/etcher/). 
 
-![Balena Etcher](images/_.JPG)
+![Balena Etcher](images/balena-etcher.JPG)
 
 ### Serial Port Access
-
 To connect to the device, plug the programming cable into the programming port, then wire the programming cable to the USB-to-serial converter properly making note of TX, RX, and GND connections.
-One way to verify that the port is working is to use [PuTTY](https://putty.org/) and open the serial port with **115200-8-N-1** settings and power on the device.
+One way to verify that the port is working is to use [PuTTY](https://putty.org/) and open the serial port with [115200/8-N-1](https://en.wikipedia.org/wiki/8-N-1) settings and power on the device.
 If all is working properly, you should see a U-Boot message on the terminal followed by boot script output. 
 
-### Python or Portable EXE Setup
+![Putty U-Boot](images/putty-terminal.JPG)
 
+### Python and Portable EXE Setup
+
+#### (OPTIONAL) Python Setup
 Python is not required to use the GUI.
 A Python environment, complete with interpreter and all necessary modules, libraries, and packages, is self-contained in the portable executable. 
 The command line tools require a Python installation.
 For those familiar with Python, the installation is described in the sections to follow. 
 For those unfamiliar with Python, please follow these steps to install or verify your Python installation and environment:
-1. (OPTIONAL - for command line use) It is recommended to install Python via a package and environment manager, the most common of which is called Anaconda.
+1. (OPTIONAL - for command line use) It is recommended to install Python via a package and environment manager, the most common of which is called Anaconda. 
+([HOW TO: installing Anaconda on Windows](https://www.datacamp.com/community/tutorials/installing-anaconda-windows))
 - Download and install the Python 3.7 version of Anaconda using the graphical installer for your system [here](https://www.anaconda.com/distribution/#download-section).
-- During installation it is important to **include Python in your PATH environment variable** even though the setup does not recommend this.
+- During installation it is important to [**include Python in your PATH environment variable**](https://user-images.githubusercontent.com/1529481/27006849-a94d7958-4e05-11e7-903e-539b57b78709.png) even though the setup does not recommend this.
 - Test your Python and Conda installations by opening up a command prompt terminal and typing `python --version` and `conda --version` to check if your environments are discoverable via PATH.
 - If you get an error when typing `python` or `conda` in command prompt, it is most likely because Python was not installed to the PATH for the user. 
+To fix this, [add Python to PATH](https://datatofish.com/add-python-to-windows-path/).
 You will need to add Python/Anaconda to PATH or re-install Python/Anaconda.
 2. (OPTIONAL - for command line use) It is recommended to create a virtual environment to run an application in.
 - Use `conda create -n ubootgui_py37 python=3.7` from a command line terminal to create the environment.
@@ -72,18 +116,22 @@ You will need to add Python/Anaconda to PATH or re-install Python/Anaconda.
 - To run the GUI from command line, type `python uboot_gui.py`
 - To get the help file (commonly referred to as the _man page_), use the `-h | --help` option by typing, for example, `python update_bootloader.py -h`
 
-To run the program GUI without installing Python, simply run the program by navigating to _uboot_serial/dist/uboot_gui.exe_.
+#### Portable EXE Setup (Windows Only)
+To run the program GUI without installing Python, simply run the program by navigating to `uboot_serial/dist/uboot_gui.exe`.
 
 ### Label Printer Setup
+To use the label printer functionality, you will need to install a custom driver for the printer. 
+Please follow the instructions in the `Printer Install/` directory [here](Printer%20Install/README.md).
 
-To use the label printer functionality, you will need to install a custom driver for the printer. Please follow the instructions in the _Printer Install_ directory.
+## Installation
 
-# Installation
-
-No installation is required to run the GUI.
-The GUI has a feature for creating QR codes which requires the qrcode package.
-The GUI also has a feature for printing QR labels with a Brother QL-500 label printer, which requires a separate driver installation described in the _Printer Install_ directory.
+No installation is required to run the GUI on Windows 10 64-bit.
+The GUI has a feature for creating QR codes which requires the `qrcode` package (included in portable EXE).
+The GUI also has a feature for printing QR labels with a [Brother QL-500](https://www.brother-usa.com/products/ql500?ef_id=:G:s) label printer, 
+which requires a separate driver installation described in the `Printer Install/` directory [here](Printer%20Install/README.md).
+The label printer function also requires the `brother_ql` package (included in portable EXE).
 A portable Windows executable is available for machines without Python installations. 
+
 For using the Python command line tools, the following installations are necessary:
 ```
 pip install -r requirements.txt
@@ -95,7 +143,9 @@ pip install qrcode[pil]
 pip install brother_ql
 ```
 
-### GUI
+### GUI Installation
+As mentioned, the portable EXE version of the GUI does not require any installation - simply run the program by navigating to `uboot_serial/dist/uboot_gui.exe`.
+For running the GUI from your own Python environment, there are certain installation requirements.
 Due to certain string formatting techniques, Python 3.6.10 or greater is required.
 It is suggested to use a virtualenv or conda environment and install Python 3.7 as follows:
 ```
@@ -104,26 +154,26 @@ activate ubootgui_py37
 pip install -r requirements.txt
 ```
 
-### Portable Windows EXE
+### Portable Windows EXE Installation
 If you do not wish to install Python on your machine, there is a portable windows *.exe distribution.
-To download the package, choose _Download as Zip_ from GitHub rather than cloning the repository,
+To download the package, download the latest release from GitHub rather than cloning the master branch of the repository,
 and navigate to the `./uboot_serial/dist` folder. The `dist` folder can be zipped into a portable self-contained Python runtime with all required packages and libraries.
 Everything needed to run the GUI application is contained in the `dist` folder. 
 To run the portable executable on a Windows machine, navigate to and run `./uboot_serial/dist/uboot_gui.exe`.
 
 ### Printer Installation
+There is a separate instruction manual for installing the [Brother QL-500](https://www.brother-usa.com/products/ql500?ef_id=:G:s) label printer. 
+Please follow instructions in the `Printer Install/` directory [here](Printer%20Install/README.md).
 
-There is a separate instruction manual for installing the Brother QL-500 label printer. Please follow instructions in the _Printer Install_ directory.
+## Dependencies
 
-# Dependencies
-
-### Command Line
+### Command Line Dependencies
 
 Tested with Python>=3.4.0
 
 `pyserial`
 
-### GUI
+### GUI Dependencies
 
 Python>=3.6.10
 
@@ -131,8 +181,17 @@ Python>=3.6.10
 
 `qrcode[pil]`
 
+`brother_ql`
 
-# Usage
+### Brother QL-500 Printer Dependencies
+
+`libusb0.dll`
+
+`LibUSB-Win32` device driver and filter installed per the instructions [here](Printer%20Install/README.md)
+
+The QL-500 label printer is required to have the DK1221 labels (23x23 square die cut) for printing QR codes. 
+
+## Usage
 
 There are three tools in this package: one for updating the bootloader firmware, another for updating the Yocto kernel firmware, and a third for updating application software.
 
@@ -167,13 +226,13 @@ For a device that simply needs an application update from the SD card, the proce
 All the tools have fields with default values for image file names that can be overridden if necessary. The following default values are assumed:
 
 > root password = "Allergen_lock"
-
+>
 > u-boot image filename = "u-boot-ccimx6qsbc.imx"
-
+>
 > boot file image filename = "core-image-base-ccimx6sbc.boot.vfat"
-
+>
 > root file system image filename = "core-image-base-ccimx6sbc.rootfs.ext4"
-
+>
 > recovery image filename = "core-image-base-ccimx6sbc.recovery.vfat"
 
 The micro SD card should be FAT formatted and flashed with the U-Boot image in a separate BOOT partition and the other image files in a separate partition.
@@ -315,7 +374,7 @@ After entering a port manually, you can click **Try Port** to test if the port i
 
 ![Try Port](images/try_port.JPG)
 
-#### Programming the Bootloader
+#### Programming the Bootloader from GUI
 
 When programming the bootloader, a prompt pops up instructing the user to boot from SD card by holding the programming button and power on the device.
 Once the device has been booted from the SD card, the user may click OK and programming will begin.
@@ -324,7 +383,7 @@ Once the device has been booted from the SD card, the user may click OK and prog
 
 ![Program Bootloader](images/program_bootloader.JPG)
 
-#### Programming the Yocto Kernel
+#### Programming the Yocto Kernel from GUI
 
 When programming the kernel, a prompt pops up instructing the user to turn the device off (this is to allow the device to boot from eMMC rather than SD card - if the device was already rebooted after programming the bootloader, then this is unnecessary).
 Once the dialog has been acknowledge and the device has booted from eMMC rather than SD card, the programming will begin.
@@ -335,7 +394,7 @@ After turning on the device, programming begins and a success message is given a
 
 ![Program Kernel](images/program_kernel.JPG)
 
-#### Setting the Serial Number and Installing the Application
+#### Setting the Serial Number and Installing the Application from GUI
 
 Before programming the application, the serial number must be set. The serial number is automatically compiled into a 16 character value given the model _BIO_, followed by a hypen, then the build level, followed by another hyphen, then the numeric unit number in a field of eight digits.
 Both fields, _Build_ and _Unit No._ are both able to be overridden, but the compiled serial number may not be valid and will throw an error during programming.
@@ -348,7 +407,7 @@ To program the application, simply click **Program Application**
 
 ![Program Application](images/program_application.JPG)
 
-#### Generating the QR Code
+#### Generating the QR Code from GUI
 
 After programming a device, a QR code should be saved and printed to label the unit. Click the **Generate QR Code** button to save the QR code as a PNG. 
 The format of contents of the QR code is "Allergen_{SERIALNO}" and the filename is identical to the contents.
@@ -356,3 +415,10 @@ The format of contents of the QR code is "Allergen_{SERIALNO}" and the filename 
 ![Generate QR Code](images/qr_code.JPG)
 
 ![QR Code](images/Allergen_BIO-CV1-00000000.png)
+
+#### Printing the QR Code Labels from GUI
+
+After generating the QR code files, you can print the labels if the Brother QL-500 printer is plugged in and installed.
+To print labels, make sure the serial number has been updated, QR code has been generated, and then click **Print QR Label**.
+
+![Print QR Label](images/print_label.JPG)
